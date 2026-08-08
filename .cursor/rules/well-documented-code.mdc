@@ -1,0 +1,49 @@
+---
+description: Require well-documented code with clear comments for this learning codebase
+alwaysApply: true
+---
+
+# Well-documented codebase
+
+This repo is for learning. Code must be readable as a tutorial, not only as working software.
+
+## Requirements
+
+- Every module gets a short module docstring stating purpose and how it fits the project.
+- Public functions/classes get docstrings: what they do, important args, and return value when non-obvious.
+- Comment **why** and non-obvious **how** (tradeoffs, safety, agent-loop steps). Do not narrate obvious syntax.
+- Keep section headers for multi-step flows (e.g. agent loop: call model → dispatch tools → append results).
+- Prefer clear names over long comments; comment when the name alone is not enough.
+- When adding or changing code, update nearby comments/docstrings so they stay accurate.
+
+## Examples
+
+```python
+# ❌ BAD — narrates the obvious
+# Increment i by 1
+i += 1
+
+# ✅ GOOD — explains intent / constraint
+# Cap tool iterations so a confused model cannot loop forever
+if iteration >= self.settings.max_iterations:
+    return "Stopped: reached max tool iterations"
+```
+
+```python
+# ❌ BAD — undocumented public API
+def dispatch_tool(name, arguments_json, workspace):
+    ...
+
+# ✅ GOOD
+def dispatch_tool(name: str, arguments_json: str, workspace: Path) -> str:
+    """Parse tool arguments and run the named tool.
+
+    Returns a string result (or error message) for the LLM as a tool message.
+    """
+```
+
+## Do not
+
+- Leave large new files uncommented.
+- Add noisy comments on every line.
+- Leave stale comments that contradict the code.

@@ -1,0 +1,10 @@
+.venv/
+.local-deps/
+__pycache__/
+*.py[cod]
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+get-pip.py
