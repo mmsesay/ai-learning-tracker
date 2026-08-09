@@ -28,7 +28,7 @@ uv pip install -e .
 tam
 ```
 
-Full write-up: [`PRJ-01/MEDIUM-ARTICLE.md`](PRJ-01/MEDIUM-ARTICLE.md)
+Details and setup: [`PRJ-01/README.md`](PRJ-01/README.md)
 
 ## What’s next (not built here yet)
 
