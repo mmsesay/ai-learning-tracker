@@ -2,7 +2,7 @@
 
 Public learning repo for **Maej** ([Muhammad Sesay](https://github.com/mmsesay)) — shipping small AI projects while leveling into AI engineering.
 
-Personal study plans and daily logs live in **Google Sheets** (private). This repo is for **code you can clone** and articles you can follow.
+Personal study plans and daily logs live in **Google Sheets** (private). This repo is for **code you can clone**.
 
 ## Projects
 
