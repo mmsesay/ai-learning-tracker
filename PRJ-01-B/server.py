@@ -1,4 +1,4 @@
-"""Developer Workspace MCP server (PRJ-01-B).
+"""DevAssist MCP server (PRJ-01-B).
 
 Exposes local project discovery, code search, and read-only git status as MCP
 tools over stdio so clients like Cursor can call them.
@@ -22,8 +22,8 @@ from tools.git import git_summary as git_summary_impl
 from tools.projects import list_projects as list_projects_impl
 from tools.search import search_code as search_code_impl
 
-# Server name shown to MCP clients.
-mcp = MCPServer("developer-workspace")
+# Server name shown to MCP clients (product name: DevAssist).
+mcp = MCPServer("devassist")
 
 
 @mcp.tool()

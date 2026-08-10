@@ -2,7 +2,7 @@
 
 **TAM** is a local CLI AI agent. It uses **tool calling** to explore your workspace: list/read/search files, write (with confirmation), run shell (with confirmation), and check git status.
 
-This is **PRJ-01-A** (Phase 1) on the AI engineering roadmap — built so you can read every step of the agent loop. Pair with **PRJ-01-B** (Weather MCP) for the MCP side of Phase 1.
+This is **PRJ-01-A** (Phase 1) on the AI engineering roadmap — built so you can read every step of the agent loop. Pair with **PRJ-01-B** (**DevAssist** MCP) for the MCP side of Phase 1.
 
 ## How TAM works
 

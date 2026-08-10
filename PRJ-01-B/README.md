@@ -1,8 +1,8 @@
-# PRJ-01-B — Developer Workspace MCP Server
+# PRJ-01-B — DevAssist MCP
 
-A small, local **Model Context Protocol (MCP)** server that lets Cursor (or any MCP client) list your projects, search code, and read Git status — without leaving a configured workspace directory.
+**DevAssist** is a small, local **Model Context Protocol (MCP)** server that lets Cursor (or any MCP client) list your projects, search code, and read Git status — without leaving a configured workspace directory.
 
-This replaces the earlier weather/API toy example with something you can use while coding.
+Think of it as the MCP sibling of **TAM** (PRJ-01-A): same “tools that act on your machine” idea, plugged into Cursor instead of a custom CLI agent loop.
 
 ## What is MCP?
 
@@ -37,7 +37,7 @@ Cursor (MCP client)
 
 | Piece | Role |
 |-------|------|
-| `server.py` | MCP entrypoint; thin wrappers with docstrings for the client |
+| `server.py` | MCP entrypoint for **DevAssist**; thin wrappers with docstrings for the client |
 | `tools/projects.py` | Workspace root + path safety + project listing |
 | `tools/search.py` | Literal text search with ignored directories |
 | `tools/git.py` | Branch + dirty files (read-only) |
@@ -84,7 +84,7 @@ Add a server entry to `~/.cursor/mcp.json` (create the file if needed). Adjust p
 ```json
 {
   "mcpServers": {
-    "developer-workspace": {
+    "devassist": {
       "command": "/home/nexlura/Projects/ai-learning-tracker/PRJ-01-B/.venv/bin/python",
       "args": [
         "/home/nexlura/Projects/ai-learning-tracker/PRJ-01-B/server.py"
@@ -102,7 +102,7 @@ Using `uv` instead of a venv path:
 ```json
 {
   "mcpServers": {
-    "developer-workspace": {
+    "devassist": {
       "command": "uv",
       "args": [
         "--directory",
@@ -121,7 +121,7 @@ Using `uv` instead of a venv path:
 }
 ```
 
-Then: **Cursor Settings → Tools & MCP** → reload / enable **developer-workspace**.
+Then: **Cursor Settings → Tools & MCP** → reload / enable **devassist** (DevAssist).
 
 ## Example prompts (after connecting)
 
@@ -157,7 +157,7 @@ PRJ-01-B/
 
 | ID | Focus |
 |----|--------|
-| **PRJ-01-A** | Tool calling inside your own CLI agent (TAM) |
-| **PRJ-01-B** | Same skill idea, exposed as an MCP server for Cursor |
+| **PRJ-01-A** | **TAM** — tool calling inside your own CLI agent |
+| **PRJ-01-B** | **DevAssist** — same skill idea, exposed as an MCP server for Cursor |
 
 Keep this small on purpose — fundamentals first, not a production code-intel platform.

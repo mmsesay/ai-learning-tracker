@@ -9,7 +9,7 @@ Personal study plans and daily logs live in **Google Sheets** (private). This re
 | ID | Name | Status | Folder |
 |----|------|--------|--------|
 | PRJ-01-A | **TAM** — AI Terminal Assistant (tool calling CLI) | Done | [`PRJ-01-A/`](PRJ-01-A/) |
-| PRJ-01-B | **Developer Workspace MCP** — list projects, search code, git status | Done | [`PRJ-01-B/`](PRJ-01-B/) |
+| PRJ-01-B | **DevAssist** — MCP server (list projects, search code, git status) | Done | [`PRJ-01-B/`](PRJ-01-B/) |
 
 ## PRJ-01-A — TAM
 
@@ -30,9 +30,9 @@ tam
 
 Details and setup: [`PRJ-01-A/README.md`](PRJ-01-A/README.md)
 
-## PRJ-01-B — Developer Workspace MCP
+## PRJ-01-B — DevAssist MCP
 
-A local **MCP server** Cursor can connect to:
+**DevAssist** is a local **MCP server** Cursor can connect to:
 
 - `list_projects` — projects under `WORKSPACE_ROOT`  
 - `search_code` — search a project (skips `.git`, `node_modules`, `.venv`, …)  
