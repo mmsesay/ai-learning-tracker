@@ -9,7 +9,7 @@ Personal study plans and daily logs live in **Google Sheets** (private). This re
 | ID | Name | Status | Folder |
 |----|------|--------|--------|
 | PRJ-01-A | **TAM** — AI Terminal Assistant (tool calling CLI) | Done | [`PRJ-01-A/`](PRJ-01-A/) |
-| PRJ-01-B | **Weather MCP** — NWS alerts & forecast via Model Context Protocol | Done | [`PRJ-01-B/`](PRJ-01-B/) |
+| PRJ-01-B | **Developer Workspace MCP** — list projects, search code, git status | Done | [`PRJ-01-B/`](PRJ-01-B/) |
 
 ## PRJ-01-A — TAM
 
@@ -30,20 +30,21 @@ tam
 
 Details and setup: [`PRJ-01-A/README.md`](PRJ-01-A/README.md)
 
-## PRJ-01-B — Weather MCP
+## PRJ-01-B — Developer Workspace MCP
 
-A small **MCP server** that exposes weather tools to clients like Cursor:
+A local **MCP server** Cursor can connect to:
 
-- `get_alerts` — active NWS alerts for a US state  
-- `get_forecast` — forecast for a lat/lon (US / NWS coverage)  
+- `list_projects` — projects under `WORKSPACE_ROOT`  
+- `search_code` — search a project (skips `.git`, `node_modules`, `.venv`, …)  
+- `git_summary` — read-only branch + dirty files  
 
 ```bash
 cd PRJ-01-B
-uv sync
-uv run weather.py
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Wire it into Cursor via MCP settings (stdio + `uv run weather.py`). Details: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
+Point Cursor MCP at `server.py` and set `WORKSPACE_ROOT`. Details: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
 
 ## Links
 
