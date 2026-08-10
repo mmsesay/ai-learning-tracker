@@ -1,0 +1,9 @@
+[project]
+name = "weather"
+version = "0.1.0"
+description = "PRJ-01-B: Weather MCP server (NWS alerts & forecast)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=2.0.0",
+]

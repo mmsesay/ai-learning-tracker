@@ -34,12 +34,12 @@ class Settings:
 def load_settings(workspace: Path | None = None) -> Settings:
     """Load config from env vars.
 
-    Looks for `.env` in the current working directory first, then in PRJ-01/,
+    Looks for `.env` in the current working directory first, then in PRJ-01-A/,
     so you can launch the CLI from any folder and still find your key.
     """
     cwd = Path.cwd()
     load_dotenv(cwd / ".env")
-    # parents[2]: .../src/terminal_assistant/config.py → PRJ-01/
+    # parents[2]: .../src/terminal_assistant/config.py → PRJ-01-A/
     project_root = Path(__file__).resolve().parents[2]
     load_dotenv(project_root / ".env")
 

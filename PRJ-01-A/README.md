@@ -2,7 +2,7 @@
 
 **TAM** is a local CLI AI agent. It uses **tool calling** to explore your workspace: list/read/search files, write (with confirmation), run shell (with confirmation), and check git status.
 
-This is Project 1 on the AI engineering roadmap — built so you can read every step of the agent loop.
+This is **PRJ-01-A** (Phase 1) on the AI engineering roadmap — built so you can read every step of the agent loop. Pair with **PRJ-01-B** (Weather MCP) for the MCP side of Phase 1.
 
 ## How TAM works
 
@@ -34,7 +34,7 @@ They need: Python 3.10+, [uv](https://docs.astral.sh/uv/) (or pip), and a free [
 ```bash
 # 1. Get the code
 git clone https://github.com/mmsesay/ai-learning-tracker.git
-cd ai-learning-tracker/PRJ-01
+cd ai-learning-tracker/PRJ-01-A
 
 # 2. Configure
 cp .env.example .env
@@ -55,7 +55,7 @@ Then ask things like: `List the files here` or `Show git status`.
 ## Setup (you already have the repo)
 
 ```bash
-cd PRJ-01
+cd PRJ-01-A
 cp .env.example .env
 # edit .env and set OPENROUTER_API_KEY=...  (https://openrouter.ai/keys)
 
