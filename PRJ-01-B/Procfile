@@ -1,1 +1,2 @@
-web: python scripts/prepare_demo_workspace.py && python server.py
+# Optional for platforms that read Procfile. Render uses the Start Command instead.
+web: python server.py

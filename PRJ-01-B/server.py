@@ -4,9 +4,9 @@ Exposes local project discovery, code search, and read-only git status as MCP
 tools. Serves either:
 
 - **stdio** — local Cursor / Claude Desktop (`TRANSPORT=stdio`)
-- **streamable-http** — remote MCP on ``/mcp`` (default; Railway / uvicorn)
+- **streamable-http** — remote MCP on ``/mcp`` (default; Render / uvicorn)
 
-Configure ``WORKSPACE_ROOT``, ``PORT``, ``HOST``, and optional ``API_KEY``.
+Configure ``WORKSPACE_ROOT``, ``PORT``, ``HOST``, and ``API_KEY``.
 Tool implementations live in ``tools/`` and are unchanged by the HTTP layer.
 """
 
@@ -109,7 +109,17 @@ def main() -> None:
             "HOST=127.0.0.1 for local open access."
         )
 
+    # Init bundled demo git repo when present (safe no-op otherwise).
+    # Keeps Render Start Command as plain `python server.py`.
+    try:
+        from scripts.prepare_demo_workspace import main as prepare_demo
+
+        prepare_demo()
+    except Exception as exc:  # noqa: BLE001 — demo prep must not block serving
+        logger.warning("demo workspace prepare skipped: %s", exc)
+
     # Streamable HTTP — official MCP remote transport (not legacy SSE).
+    # PORT comes from the environment (Render injects $PORT).
     app = build_http_app(mcp, settings)
     import uvicorn
 

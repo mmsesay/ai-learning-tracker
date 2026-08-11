@@ -47,11 +47,11 @@ class Settings:
 def load_settings() -> Settings:
     """Load settings from the environment.
 
-    PORT defaults to 3000 (Railway injects PORT in production).
-    HOST defaults to 0.0.0.0 so containers / Railway accept external traffic.
+    PORT defaults to 3000 locally; Render (and similar hosts) inject PORT.
+    HOST defaults to 0.0.0.0 so containers accept external traffic.
     TRANSPORT is ``streamable-http`` (remote) or ``stdio`` (local Cursor).
     MCP_ALLOWED_HOSTS is a comma list of Host header values for DNS rebinding
-    protection (e.g. ``my-app.up.railway.app,my-app.up.railway.app:*``).
+    protection (e.g. ``my-app.onrender.com,my-app.onrender.com:*``).
     """
     port_raw = _env("PORT", "3000") or "3000"
     try:

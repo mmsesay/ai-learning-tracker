@@ -84,11 +84,11 @@ Or with stdio (unchanged local workflow):
 TRANSPORT=stdio python server.py
 ```
 
-## 7. Remote connection (after Railway)
+## 7. Remote connection (after Render)
 
 ```bash
-curl -s https://YOUR-RAILWAY-DOMAIN/health
-curl -s -i -X POST https://YOUR-RAILWAY-DOMAIN/mcp \
+curl -s https://YOUR-APP.onrender.com/health
+curl -s -i -X POST https://YOUR-APP.onrender.com/mcp \
   -H "Authorization: Bearer $API_KEY" \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \

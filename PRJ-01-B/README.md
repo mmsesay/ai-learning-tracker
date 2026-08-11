@@ -7,7 +7,7 @@ It supports two transports:
 | Transport | When | How |
 |-----------|------|-----|
 | **stdio** | Local Cursor / Claude Desktop | `TRANSPORT=stdio python server.py` |
-| **Streamable HTTP** | Remote / Railway (default) | `python server.py` → `POST /mcp` |
+| **Streamable HTTP** | Remote / Render (default) | `python server.py` → `POST /mcp` |
 
 This is the MCP sibling of **TAM** (PRJ-01-A): same “tools on your machine” idea, packaged for clients over MCP.
 
@@ -111,12 +111,12 @@ TRANSPORT=stdio WORKSPACE_ROOT="$HOME/Projects" python server.py
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `PORT` | `3000` | Listen port (**Railway sets this**) |
-| `HOST` | `0.0.0.0` | Bind address (required for Railway) |
+| `PORT` | `3000` | Listen port (**Render sets `$PORT` — do not hard-code**) |
+| `HOST` | `0.0.0.0` | Bind address (required on Render) |
 | `TRANSPORT` | `streamable-http` | `streamable-http` or `stdio` |
-| `WORKSPACE_ROOT` | `./demo_workspace` | Parent of projects (use `demo_workspace` on Railway) |
+| `WORKSPACE_ROOT` | `./demo_workspace` | Parent of projects (`demo_workspace` on Render) |
 | `API_KEY` | _(empty)_ | **Required** when `HOST=0.0.0.0`. Bearer on `/mcp` |
-| `MCP_ALLOWED_HOSTS` | _(empty)_ | Railway domain allowlist, e.g. `app.up.railway.app,app.up.railway.app:*` |
+| `MCP_ALLOWED_HOSTS` | _(empty)_ | Render domain allowlist, e.g. `app.onrender.com,app.onrender.com:*` |
 
 See [`.env.example`](.env.example). Never commit `.env`.
 
@@ -131,41 +131,49 @@ See [`.env.example`](.env.example). Never commit `.env`.
 
 # Deployment
 
-## Railway (recommended for this milestone)
+## Render (Web Service)
 
-Railway can deploy this Python app with Nixpacks (no Dockerfile required).
+Deploy DevAssist as a **Python 3** Web Service. No Docker.
 
 ```text
-1. Push this repo (or PRJ-01-B) to GitHub
-2. Create a Railway project → Deploy from GitHub
-3. Set Root Directory to PRJ-01-B (if the repo is the monorepo)
-4. Configure variables (below)
-5. Generate a public domain
-6. Verify GET https://YOUR-RAILWAY-DOMAIN/health
-7. Verify POST https://YOUR-RAILWAY-DOMAIN/mcp (with Bearer if API_KEY set)
-8. Connect Cursor / AI SDK to https://YOUR-RAILWAY-DOMAIN/mcp
+1. Push this repo to GitHub
+2. Render → New → Web Service → connect the repo
+3. Root Directory: PRJ-01-B
+4. Runtime: Python 3
+5. Build Command: pip install -r requirements.txt
+6. Start Command: python server.py
+7. Health Check Path: /health
+8. Add environment variables (below)
+9. Deploy → open https://YOUR-APP.onrender.com/health
+10. Connect Cursor to https://YOUR-APP.onrender.com/mcp
 ```
 
-### Railway environment variables
+### Render settings
 
-| Variable | Example | Notes |
-|----------|---------|--------|
-| `PORT` | _(Railway)_ | Injected automatically — do not hard-code |
-| `HOST` | `0.0.0.0` | Required so Railway can reach uvicorn |
-| `TRANSPORT` | `streamable-http` | Default |
-| `API_KEY` | long random secret | **Required** (server refuses public bind without it) |
-| `WORKSPACE_ROOT` | `demo_workspace` | Ships with `sample-app`; Procfile inits git for demos |
-| `MCP_ALLOWED_HOSTS` | `YOUR-APP.up.railway.app,YOUR-APP.up.railway.app:*` | Enable DNS rebinding allowlist once domain exists |
+| Setting | Value |
+|---------|--------|
+| **Root Directory** | `PRJ-01-B` |
+| **Runtime** | Python 3 |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `python server.py` |
+| **Health Check Path** | `/health` |
 
-**Start command** (Procfile already does this):
+`python server.py` reads `$PORT` from the environment (Render injects it) and binds `HOST` (default `0.0.0.0`). On startup it also prepares `demo_workspace/sample-app` as a tiny git repo when that folder is present.
 
-```bash
-python scripts/prepare_demo_workspace.py && python server.py
-```
+### Render environment variables
 
-### Important Railway caveat
+| Variable | Value | Notes |
+|----------|--------|--------|
+| `HOST` | `0.0.0.0` | Required |
+| `TRANSPORT` | `streamable-http` | Required |
+| `PORT` | _(do not set)_ | Render provides `$PORT` |
+| `API_KEY` | long random secret | **Required** |
+| `WORKSPACE_ROOT` | `demo_workspace` | Bundled demo projects |
+| `MCP_ALLOWED_HOSTS` | `YOUR-APP.onrender.com,YOUR-APP.onrender.com:*` | Set after you know the domain |
 
-`WORKSPACE_ROOT` is a path **inside the container**, not your laptop. For the first demo, use the bundled `demo_workspace/` (one project: `sample-app`). Do not expect access to `~/Projects` on your machine.
+### Important Render caveat
+
+`WORKSPACE_ROOT` is inside the Render service filesystem, not your laptop. Use the bundled `demo_workspace/` (`sample-app`) for the first demo.
 
 ---
 
@@ -177,7 +185,7 @@ Remote Streamable HTTP ([Cursor MCP docs](https://cursor.com/docs/mcp)):
 {
   "mcpServers": {
     "devassist": {
-      "url": "https://YOUR-RAILWAY-DOMAIN/mcp",
+      "url": "https://YOUR-APP.onrender.com/mcp",
       "headers": {
         "Authorization": "Bearer ${env:DEVASSIST_API_KEY}"
       }
@@ -227,7 +235,7 @@ import { createMCPClient } from "@ai-sdk/mcp";
 const mcpClient = await createMCPClient({
   transport: {
     type: "http",
-    url: "https://YOUR-RAILWAY-DOMAIN/mcp",
+    url: "https://YOUR-APP.onrender.com/mcp",
     headers: { Authorization: `Bearer ${process.env.DEVASSIST_API_KEY}` },
   },
 });
@@ -240,7 +248,7 @@ await mcpClient.close();
 ```bash
 cd examples/ai-sdk-client
 npm install
-DEVASSIST_URL=https://YOUR-RAILWAY-DOMAIN/mcp \
+DEVASSIST_URL=https://YOUR-APP.onrender.com/mcp \
 DEVASSIST_API_KEY=your-key \
 npm run list-tools
 ```

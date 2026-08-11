@@ -80,7 +80,7 @@ def register_public_routes(mcp) -> None:
 
     @mcp.custom_route("/health", methods=["GET"])
     async def health(_request: Request) -> Response:
-        """Liveness probe for Railway / load balancers."""
+        """Liveness probe for Render / load balancers."""
         return JSONResponse({"status": "healthy", "service": "devassist"})
 
 
@@ -88,10 +88,10 @@ def build_transport_security(settings: Settings):
     """Configure DNS rebinding protection per official MCP deploy guidance.
 
     - If ``MCP_ALLOWED_HOSTS`` is set: enable protection and allowlist those Hosts
-      (correct for a known Railway public domain).
+      (correct for a known Render public domain).
     - If unset on a public bind: disable protection. Official docs treat this as
       acceptable behind a reverse proxy that already controls the Host header
-      (Railway's HTTPS edge). Prefer setting ``MCP_ALLOWED_HOSTS`` once the
+      (Render's HTTPS edge). Prefer setting ``MCP_ALLOWED_HOSTS`` once the
       domain is known.
     """
     from mcp.server.transport_security import TransportSecuritySettings
@@ -111,7 +111,7 @@ def build_transport_security(settings: Settings):
 
     logger.warning(
         "MCP_ALLOWED_HOSTS unset — DNS rebinding protection OFF "
-        "(ok behind Railway's reverse proxy; set MCP_ALLOWED_HOSTS to your "
+        "(ok behind Render's reverse proxy; set MCP_ALLOWED_HOSTS to your "
         "public domain when you have it)"
     )
     return TransportSecuritySettings(enable_dns_rebinding_protection=False)
@@ -121,7 +121,7 @@ def build_http_app(mcp, settings: Settings):
     """Build the Streamable HTTP Starlette app with optional API key middleware.
 
     Uses the official SDK path ``/mcp`` (Streamable HTTP, not legacy SSE).
-    ``stateless_http=True`` keeps Railway / multi-instance deploys simple.
+    ``stateless_http=True`` keeps Render / multi-instance deploys simple.
     """
     register_public_routes(mcp)
 

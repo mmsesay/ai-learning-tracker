@@ -32,7 +32,7 @@ Details and setup: [`PRJ-01-A/README.md`](PRJ-01-A/README.md)
 
 ## PRJ-01-B — DevAssist MCP
 
-**DevAssist** is an MCP server Cursor (or Railway) can connect to:
+**DevAssist** is an MCP server Cursor (or Render) can connect to:
 
 - `list_projects` — projects under `WORKSPACE_ROOT`  
 - `search_code` — search a project (skips `.git`, `node_modules`, `.venv`, …)  
@@ -47,7 +47,7 @@ export WORKSPACE_ROOT="$HOME/Projects"
 python server.py   # http://0.0.0.0:3000/mcp
 ```
 
-Details, Railway, Cursor remote URL, and AI SDK example: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
+Details, Render, Cursor remote URL, and AI SDK example: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
 
 ## Links
 

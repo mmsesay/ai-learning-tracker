@@ -1,4 +1,4 @@
-"""Tiny demo app used on Railway to exercise DevAssist tools."""
+"""Tiny demo app used on Render to exercise DevAssist tools."""
 
 APP_NAME = "sample-app"
 
