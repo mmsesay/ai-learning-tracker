@@ -1,0 +1,2 @@
+# Optional: explicit start for platforms that read Procfile
+web: python server.py

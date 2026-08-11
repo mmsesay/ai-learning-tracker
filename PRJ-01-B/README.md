@@ -1,163 +1,278 @@
 # PRJ-01-B — DevAssist MCP
 
-**DevAssist** is a small, local **Model Context Protocol (MCP)** server that lets Cursor (or any MCP client) list your projects, search code, and read Git status — without leaving a configured workspace directory.
+**DevAssist** is an MCP server that lists projects, searches code, and summarizes Git status under a configured `WORKSPACE_ROOT`.
 
-Think of it as the MCP sibling of **TAM** (PRJ-01-A): same “tools that act on your machine” idea, plugged into Cursor instead of a custom CLI agent loop.
+It supports two transports:
+
+| Transport | When | How |
+|-----------|------|-----|
+| **stdio** | Local Cursor / Claude Desktop | `TRANSPORT=stdio python server.py` |
+| **Streamable HTTP** | Remote / Railway (default) | `python server.py` → `POST /mcp` |
+
+This is the MCP sibling of **TAM** (PRJ-01-A): same “tools on your machine” idea, packaged for clients over MCP.
+
+> **Note:** DevAssist is **Python** (official MCP Python SDK). Fastify/Express do not apply here — the SDK builds a **Starlette** ASGI app served by **uvicorn**, which is the recommended remote path for this stack.
 
 ## What is MCP?
 
-**MCP (Model Context Protocol)** is a standard way for AI apps to call external tools and data sources.
+**MCP (Model Context Protocol)** is a standard way for AI apps to connect to external tools.
 
-- The **client** (e.g. Cursor) speaks MCP.
-- The **server** (this project) exposes tools over a transport — here, **stdio**.
-- The model decides when to call a tool; your Python code does the real work and returns text results.
-
-Same idea as tool calling in **PRJ-01-A (TAM)**, but the tools are packaged as an MCP server other apps can plug in.
-
-## What this project demonstrates
-
-- Defining MCP tools with the official Python SDK (`MCPServer`)
-- Splitting tool logic into small modules
-- Path validation so tools cannot escape `WORKSPACE_ROOT`
-- Read-only Git inspection via subprocess
-- Simple, beginner-friendly structure (no web framework, no agent loop)
+- **stdio** — client spawns the server as a subprocess (local).
+- **Streamable HTTP** — client calls a single HTTP endpoint (`/mcp`) over the network (remote). This replaces the older HTTP+SSE transport for new deployments.
 
 ## Architecture
 
 ```text
-Cursor (MCP client)
-        │  stdio
+MCP Client (Cursor / AI SDK / Claude)
+        │  HTTPS (or stdio locally)
         ▼
-   server.py          ← registers tools, runs MCPServer
+   DevAssist  GET /  ·  GET /health  ·  POST /mcp
         │
-        ├── tools/projects.py  → list_projects()
-        ├── tools/search.py    → search_code(query, project)
-        └── tools/git.py       → git_summary(project)
+   MCPServer ("devassist")
+        │
+        ├── list_projects
+        ├── search_code
+        └── git_summary
+              └── tools/*.py  (unchanged implementations)
 ```
-
-| Piece | Role |
-|-------|------|
-| `server.py` | MCP entrypoint for **DevAssist**; thin wrappers with docstrings for the client |
-| `tools/projects.py` | Workspace root + path safety + project listing |
-| `tools/search.py` | Literal text search with ignored directories |
-| `tools/git.py` | Branch + dirty files (read-only) |
-| `WORKSPACE_ROOT` | Env var: parent folder that contains your projects |
 
 ## Available tools
 
 | Tool | Purpose |
 |------|---------|
-| `list_projects()` | List first-level folders under `WORKSPACE_ROOT` (name + path) |
-| `search_code(query, project)` | Search source files; skip `.git`, `node_modules`, `.venv`, etc. |
-| `git_summary(project)` | Current branch + modified/untracked files (never mutates) |
+| `list_projects()` | List first-level folders under `WORKSPACE_ROOT` |
+| `search_code(query, project)` | Search source files (skips `.git`, `node_modules`, `.venv`, …) |
+| `git_summary(project)` | Read-only branch + dirty files |
 
-## Install
+---
 
-Python 3.10+ recommended.
+# Remote MCP Server
+
+## What changed from the local version
+
+- Default transport is **Streamable HTTP** on `HOST:PORT` with MCP at **`/mcp`**.
+- Added **`GET /`** (service info) and **`GET /health`** (liveness).
+- Optional **`API_KEY`** → `Authorization: Bearer <API_KEY>` on `/mcp`.
+- **stdio** still works for local Cursor (`TRANSPORT=stdio`).
+- Tool modules under `tools/` were **not** rewritten.
+
+## Why Streamable HTTP?
+
+It is the current MCP remote transport: one endpoint, works behind load balancers, and is what Cursor expects for `url`-based MCP entries. Legacy SSE exists only for older clients — DevAssist does not use it for the new remote path.
+
+## Local Development
 
 ```bash
 cd PRJ-01-B
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # edit WORKSPACE_ROOT / API_KEY as needed
+
+export WORKSPACE_ROOT="$HOME/Projects"
+export PORT=3000
+export HOST=0.0.0.0
+python server.py
 ```
 
-Or with [uv](https://docs.astral.sh/uv/):
+Smoke checks:
 
 ```bash
-cd PRJ-01-B
-uv venv && source .venv/bin/activate
-uv pip install -r requirements.txt
+curl -s http://127.0.0.1:3000/health
+curl -s http://127.0.0.1:3000/
 ```
 
-Quick smoke test (should print projects under your workspace):
+More curl / auth cases: [`TESTING.md`](TESTING.md).
+
+### Local stdio (unchanged Cursor workflow)
 
 ```bash
-export WORKSPACE_ROOT="$HOME/Projects"   # change to your projects folder
-python -c "from tools.projects import list_projects; print(list_projects())"
+TRANSPORT=stdio WORKSPACE_ROOT="$HOME/Projects" python server.py
 ```
 
-## Configure Cursor
-
-Add a server entry to `~/.cursor/mcp.json` (create the file if needed). Adjust paths for your machine:
+`~/.cursor/mcp.json` example (stdio):
 
 ```json
 {
   "mcpServers": {
     "devassist": {
-      "command": "/home/nexlura/Projects/ai-learning-tracker/PRJ-01-B/.venv/bin/python",
-      "args": [
-        "/home/nexlura/Projects/ai-learning-tracker/PRJ-01-B/server.py"
-      ],
+      "command": "/ABS/PATH/PRJ-01-B/.venv/bin/python",
+      "args": ["/ABS/PATH/PRJ-01-B/server.py"],
       "env": {
-        "WORKSPACE_ROOT": "/home/nexlura/Projects"
+        "TRANSPORT": "stdio",
+        "WORKSPACE_ROOT": "/ABS/PATH/Projects"
       }
     }
   }
 }
 ```
 
-Using `uv` instead of a venv path:
+## Environment variables
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `PORT` | `3000` | Listen port (**Railway sets this**) |
+| `HOST` | `0.0.0.0` | Bind address (required for Railway) |
+| `TRANSPORT` | `streamable-http` | `streamable-http` or `stdio` |
+| `WORKSPACE_ROOT` | `.` | Parent folder of projects |
+| `API_KEY` | _(empty)_ | If set, Bearer auth on `/mcp` |
+
+See [`.env.example`](.env.example). Never commit `.env`.
+
+## Authentication
+
+- **Unset `API_KEY`:** `/mcp` is open (local learning only).
+- **Set `API_KEY`:** clients must send `Authorization: Bearer <API_KEY>`.
+- `/` and `/health` stay public for probes.
+
+---
+
+# Deployment
+
+## Railway (recommended for this milestone)
+
+Railway can deploy this Python app with Nixpacks (no Dockerfile required).
+
+```text
+1. Push this repo (or PRJ-01-B) to GitHub
+2. Create a Railway project → Deploy from GitHub
+3. Set Root Directory to PRJ-01-B (if the repo is the monorepo)
+4. Configure variables (below)
+5. Generate a public domain
+6. Verify GET https://YOUR-RAILWAY-DOMAIN/health
+7. Verify POST https://YOUR-RAILWAY-DOMAIN/mcp (with Bearer if API_KEY set)
+8. Connect Cursor / AI SDK to https://YOUR-RAILWAY-DOMAIN/mcp
+```
+
+### Railway environment variables
+
+| Variable | Example | Notes |
+|----------|---------|--------|
+| `PORT` | _(Railway)_ | Do not hard-code; Railway injects it |
+| `HOST` | `0.0.0.0` | Required |
+| `TRANSPORT` | `streamable-http` | Default |
+| `API_KEY` | long random secret | Strongly recommended on a public URL |
+| `WORKSPACE_ROOT` | `/data` or app path | On Railway you usually mount/copy a workspace or point at the deployed tree |
+
+**Start command** (if Railway does not detect it):
+
+```bash
+python server.py
+```
+
+Or use the included `Procfile`: `web: python server.py`.
+
+### Important Railway caveat
+
+DevAssist tools read a real filesystem (`WORKSPACE_ROOT`). A bare Railway web service only sees its own deploy filesystem unless you attach a volume or sync repos. For the learning milestone, pointing `WORKSPACE_ROOT` at the deployed `PRJ-01-B` parent (the monorepo checkout) is enough to exercise tools against this repo.
+
+---
+
+# Connecting from Cursor
+
+Remote Streamable HTTP ([Cursor MCP docs](https://cursor.com/docs/mcp)):
 
 ```json
 {
   "mcpServers": {
     "devassist": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/home/nexlura/Projects/ai-learning-tracker/PRJ-01-B",
-        "run",
-        "--with-requirements",
-        "requirements.txt",
-        "python",
-        "server.py"
-      ],
-      "env": {
-        "WORKSPACE_ROOT": "/home/nexlura/Projects"
+      "url": "https://YOUR-RAILWAY-DOMAIN/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:DEVASSIST_API_KEY}"
       }
     }
   }
 }
 ```
 
-Then: **Cursor Settings → Tools & MCP** → reload / enable **devassist** (DevAssist).
+Local HTTP while developing:
 
-## Example prompts (after connecting)
+```json
+{
+  "mcpServers": {
+    "devassist-local-http": {
+      "url": "http://127.0.0.1:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:DEVASSIST_API_KEY}"
+      }
+    }
+  }
+}
+```
 
-- “List my development projects.”
-- “Search `ai-learning-tracker` for `MCPServer`.”
-- “What’s the git status of `ai-learning-tracker`?”
-- “In `ai-learning-tracker`, find where `list_projects` is defined.”
-- “Summarize dirty files in my learning tracker repo.”
+Reload **Settings → Tools & MCP** after editing.
 
-## Security considerations
+---
 
-- **Workspace jail:** every project path is resolved and must stay under `WORKSPACE_ROOT`. Absolute paths outside that root are rejected.
-- **Read-mostly:** this server lists, searches, and runs read-only `git` commands. It does not write files or mutate git state.
-- **Trust boundary:** an MCP client can invoke any exposed tool. Only enable this server for workspaces you are comfortable exposing to the model.
-- **Secrets:** do not point `WORKSPACE_ROOT` at folders full of credentials; search can surface `.env.example`-style files and other text. Prefer excluding secret-heavy trees from the workspace root.
-- **Local only:** stdio MCP is for your machine; do not expose this process on a network port without a real auth model.
+# Connecting from Claude Desktop
+
+Claude Desktop historically prefers **stdio** local servers (`mcp install` / config `command`). For a **remote** URL, use a client that supports Streamable HTTP (Cursor, or an SDK). To keep using Claude Desktop locally:
+
+```bash
+TRANSPORT=stdio WORKSPACE_ROOT="$HOME/Projects" python server.py
+```
+
+and register that command in Claude’s MCP config (same idea as the stdio Cursor block above).
+
+---
+
+# Connecting from AI SDK
+
+Small example under [`examples/ai-sdk-client/`](examples/ai-sdk-client/) using `@ai-sdk/mcp` + HTTP transport:
+
+```ts
+import { createMCPClient } from "@ai-sdk/mcp";
+
+const mcpClient = await createMCPClient({
+  transport: {
+    type: "http",
+    url: "https://YOUR-RAILWAY-DOMAIN/mcp",
+    headers: { Authorization: `Bearer ${process.env.DEVASSIST_API_KEY}` },
+  },
+});
+
+const tools = await mcpClient.tools();
+// pass `tools` into generateText / streamText, then:
+await mcpClient.close();
+```
+
+```bash
+cd examples/ai-sdk-client
+npm install
+DEVASSIST_URL=https://YOUR-RAILWAY-DOMAIN/mcp \
+DEVASSIST_API_KEY=your-key \
+npm run list-tools
+```
+
+---
 
 ## Layout
 
 ```text
 PRJ-01-B/
-├── server.py           # MCP server entry
-├── tools/
-│   ├── projects.py     # list_projects + path helpers
-│   ├── search.py       # search_code
-│   └── git.py          # git_summary
+├── server.py              # tools + entry (stdio or HTTP)
+├── config.py              # PORT / HOST / API_KEY / TRANSPORT
+├── http_app.py            # / /health + Bearer middleware + Streamable HTTP app
+├── tools/                 # list_projects, search_code, git_summary (unchanged)
+├── tests/test_http.py
+├── examples/ai-sdk-client/  # Vercel AI SDK consumer example
 ├── requirements.txt
-├── README.md
-└── .gitignore
+├── Procfile
+├── .env.example
+├── TESTING.md
+└── README.md
 ```
 
-## How it fits Phase 1
+## Security
+
+- Path jail under `WORKSPACE_ROOT` (existing).
+- Tools are read-mostly (no mutating git).
+- Set `API_KEY` on any public URL.
+- Do not commit secrets.
+
+## Phase 1 map
 
 | ID | Focus |
 |----|--------|
-| **PRJ-01-A** | **TAM** — tool calling inside your own CLI agent |
-| **PRJ-01-B** | **DevAssist** — same skill idea, exposed as an MCP server for Cursor |
-
-Keep this small on purpose — fundamentals first, not a production code-intel platform.
+| **PRJ-01-A — TAM** | Tool calling inside your own CLI agent |
+| **PRJ-01-B — DevAssist** | MCP server: local stdio → remote Streamable HTTP |

@@ -9,7 +9,7 @@ Personal study plans and daily logs live in **Google Sheets** (private). This re
 | ID | Name | Status | Folder |
 |----|------|--------|--------|
 | PRJ-01-A | **TAM** — AI Terminal Assistant (tool calling CLI) | Done | [`PRJ-01-A/`](PRJ-01-A/) |
-| PRJ-01-B | **DevAssist** — MCP server (list projects, search code, git status) | Done | [`PRJ-01-B/`](PRJ-01-B/) |
+| PRJ-01-B | **DevAssist** — MCP server (stdio + remote Streamable HTTP) | Done | [`PRJ-01-B/`](PRJ-01-B/) |
 
 ## PRJ-01-A — TAM
 
@@ -32,19 +32,22 @@ Details and setup: [`PRJ-01-A/README.md`](PRJ-01-A/README.md)
 
 ## PRJ-01-B — DevAssist MCP
 
-**DevAssist** is a local **MCP server** Cursor can connect to:
+**DevAssist** is an MCP server Cursor (or Railway) can connect to:
 
 - `list_projects` — projects under `WORKSPACE_ROOT`  
 - `search_code` — search a project (skips `.git`, `node_modules`, `.venv`, …)  
 - `git_summary` — read-only branch + dirty files  
+- **Transports:** local **stdio** or remote **Streamable HTTP** (`POST /mcp`)  
 
 ```bash
 cd PRJ-01-B
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+export WORKSPACE_ROOT="$HOME/Projects"
+python server.py   # http://0.0.0.0:3000/mcp
 ```
 
-Point Cursor MCP at `server.py` and set `WORKSPACE_ROOT`. Details: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
+Details, Railway, Cursor remote URL, and AI SDK example: [`PRJ-01-B/README.md`](PRJ-01-B/README.md)
 
 ## Links
 

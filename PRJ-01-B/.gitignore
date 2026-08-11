@@ -10,3 +10,5 @@ build/
 .env
 *.log
 MEDIUM-ARTICLE.md
+node_modules/
+examples/ai-sdk-client/node_modules/

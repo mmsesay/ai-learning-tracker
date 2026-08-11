@@ -1,0 +1,17 @@
+{
+  "name": "devassist-ai-sdk-client-example",
+  "private": true,
+  "type": "module",
+  "description": "Example: connect Vercel AI SDK to remote DevAssist MCP (Streamable HTTP)",
+  "scripts": {
+    "list-tools": "tsx list-tools.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/mcp": "^1.0.0",
+    "ai": "^5.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
