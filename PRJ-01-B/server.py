@@ -1,17 +1,22 @@
 """DevAssist MCP server (PRJ-01-B).
 
 Exposes local project discovery, code search, and read-only git status as MCP
-tools over stdio so clients like Cursor can call them.
+tools. Serves either:
 
-Configure the project root with the WORKSPACE_ROOT environment variable.
+- **stdio** — local Cursor / Claude Desktop (`TRANSPORT=stdio`)
+- **streamable-http** — remote MCP on ``/mcp`` (default; Railway / uvicorn)
+
+Configure ``WORKSPACE_ROOT``, ``PORT``, ``HOST``, and optional ``API_KEY``.
+Tool implementations live in ``tools/`` and are unchanged by the HTTP layer.
 """
 
 from __future__ import annotations
 
+import logging
 import sys
 from pathlib import Path
 
-# Cursor may start this file with a cwd outside PRJ-01-B; keep local imports working.
+# Cursor / uvicorn may start this file with a cwd outside PRJ-01-B.
 _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -21,6 +26,12 @@ from mcp.server import MCPServer
 from tools.git import git_summary as git_summary_impl
 from tools.projects import list_projects as list_projects_impl
 from tools.search import search_code as search_code_impl
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("devassist")
 
 # Server name shown to MCP clients (product name: DevAssist).
 mcp = MCPServer("devassist")
@@ -73,6 +84,35 @@ async def git_summary(project: str) -> str:
     return git_summary_impl(project=project)
 
 
+def main() -> None:
+    """Start DevAssist using TRANSPORT from the environment."""
+    from config import load_settings
+    from http_app import build_http_app
+
+    settings = load_settings()
+    # Ensure workspace env is visible to tool modules (they read os.environ).
+    import os
+
+    if settings.workspace_root:
+        os.environ.setdefault("WORKSPACE_ROOT", settings.workspace_root)
+
+    if settings.transport == "stdio":
+        logger.info("Starting DevAssist over stdio (local MCP)")
+        mcp.run(transport="stdio")
+        return
+
+    # Streamable HTTP — official MCP remote transport (not legacy SSE).
+    app = build_http_app(mcp, settings)
+    import uvicorn
+
+    logger.info(
+        "Starting DevAssist Streamable HTTP on http://%s:%s/mcp (auth=%s)",
+        settings.host,
+        settings.port,
+        "on" if settings.auth_enabled else "off",
+    )
+    uvicorn.run(app, host=settings.host, port=settings.port, log_level="info")
+
+
 if __name__ == "__main__":
-    # stdio is what Cursor uses for local MCP servers.
-    mcp.run(transport="stdio")
+    main()
