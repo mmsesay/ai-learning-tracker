@@ -12,3 +12,4 @@ build/
 MEDIUM-ARTICLE.md
 node_modules/
 examples/ai-sdk-client/node_modules/
+demo_workspace/sample-app/.git/

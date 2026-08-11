@@ -14,6 +14,14 @@ def _env(name: str, default: str = "") -> str:
     return os.environ.get(name, default).strip()
 
 
+def _csv_env(name: str) -> list[str]:
+    """Parse a comma-separated env var into a list of non-empty strips."""
+    raw = _env(name)
+    if not raw:
+        return []
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
 @dataclass(frozen=True)
 class Settings:
     """Process settings for serving DevAssist."""
@@ -23,11 +31,17 @@ class Settings:
     api_key: str | None
     transport: str
     workspace_root: str
+    allowed_hosts: list[str]
 
     @property
     def auth_enabled(self) -> bool:
         """True when API_KEY is set (Bearer required on /mcp)."""
         return bool(self.api_key)
+
+    @property
+    def binds_publicly(self) -> bool:
+        """True when the HTTP server accepts non-loopback clients."""
+        return self.host in {"0.0.0.0", "::", "[::]"}
 
 
 def load_settings() -> Settings:
@@ -36,6 +50,8 @@ def load_settings() -> Settings:
     PORT defaults to 3000 (Railway injects PORT in production).
     HOST defaults to 0.0.0.0 so containers / Railway accept external traffic.
     TRANSPORT is ``streamable-http`` (remote) or ``stdio`` (local Cursor).
+    MCP_ALLOWED_HOSTS is a comma list of Host header values for DNS rebinding
+    protection (e.g. ``my-app.up.railway.app,my-app.up.railway.app:*``).
     """
     port_raw = _env("PORT", "3000") or "3000"
     try:
@@ -58,4 +74,5 @@ def load_settings() -> Settings:
         api_key=api_key,
         transport=transport,
         workspace_root=_env("WORKSPACE_ROOT", ".") or ".",
+        allowed_hosts=_csv_env("MCP_ALLOWED_HOSTS"),
     )

@@ -114,15 +114,17 @@ TRANSPORT=stdio WORKSPACE_ROOT="$HOME/Projects" python server.py
 | `PORT` | `3000` | Listen port (**Railway sets this**) |
 | `HOST` | `0.0.0.0` | Bind address (required for Railway) |
 | `TRANSPORT` | `streamable-http` | `streamable-http` or `stdio` |
-| `WORKSPACE_ROOT` | `.` | Parent folder of projects |
-| `API_KEY` | _(empty)_ | If set, Bearer auth on `/mcp` |
+| `WORKSPACE_ROOT` | `./demo_workspace` | Parent of projects (use `demo_workspace` on Railway) |
+| `API_KEY` | _(empty)_ | **Required** when `HOST=0.0.0.0`. Bearer on `/mcp` |
+| `MCP_ALLOWED_HOSTS` | _(empty)_ | Railway domain allowlist, e.g. `app.up.railway.app,app.up.railway.app:*` |
 
 See [`.env.example`](.env.example). Never commit `.env`.
 
 ## Authentication
 
-- **Unset `API_KEY`:** `/mcp` is open (local learning only).
-- **Set `API_KEY`:** clients must send `Authorization: Bearer <API_KEY>`.
+- **Public bind (`HOST=0.0.0.0`):** `API_KEY` is **required** (server exits otherwise).
+- **Loopback (`HOST=127.0.0.1`):** `API_KEY` optional for open local HTTP.
+- Clients send `Authorization: Bearer <API_KEY>` on `/mcp`.
 - `/` and `/health` stay public for probes.
 
 ---
@@ -148,23 +150,22 @@ Railway can deploy this Python app with Nixpacks (no Dockerfile required).
 
 | Variable | Example | Notes |
 |----------|---------|--------|
-| `PORT` | _(Railway)_ | Do not hard-code; Railway injects it |
-| `HOST` | `0.0.0.0` | Required |
+| `PORT` | _(Railway)_ | Injected automatically — do not hard-code |
+| `HOST` | `0.0.0.0` | Required so Railway can reach uvicorn |
 | `TRANSPORT` | `streamable-http` | Default |
-| `API_KEY` | long random secret | Strongly recommended on a public URL |
-| `WORKSPACE_ROOT` | `/data` or app path | On Railway you usually mount/copy a workspace or point at the deployed tree |
+| `API_KEY` | long random secret | **Required** (server refuses public bind without it) |
+| `WORKSPACE_ROOT` | `demo_workspace` | Ships with `sample-app`; Procfile inits git for demos |
+| `MCP_ALLOWED_HOSTS` | `YOUR-APP.up.railway.app,YOUR-APP.up.railway.app:*` | Enable DNS rebinding allowlist once domain exists |
 
-**Start command** (if Railway does not detect it):
+**Start command** (Procfile already does this):
 
 ```bash
-python server.py
+python scripts/prepare_demo_workspace.py && python server.py
 ```
-
-Or use the included `Procfile`: `web: python server.py`.
 
 ### Important Railway caveat
 
-DevAssist tools read a real filesystem (`WORKSPACE_ROOT`). A bare Railway web service only sees its own deploy filesystem unless you attach a volume or sync repos. For the learning milestone, pointing `WORKSPACE_ROOT` at the deployed `PRJ-01-B` parent (the monorepo checkout) is enough to exercise tools against this repo.
+`WORKSPACE_ROOT` is a path **inside the container**, not your laptop. For the first demo, use the bundled `demo_workspace/` (one project: `sample-app`). Do not expect access to `~/Projects` on your machine.
 
 ---
 

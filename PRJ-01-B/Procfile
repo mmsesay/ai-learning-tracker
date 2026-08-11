@@ -1,2 +1,1 @@
-# Optional: explicit start for platforms that read Procfile
-web: python server.py
+web: python scripts/prepare_demo_workspace.py && python server.py

@@ -21,6 +21,7 @@ def test_load_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HOST", raising=False)
     monkeypatch.delenv("API_KEY", raising=False)
     monkeypatch.delenv("TRANSPORT", raising=False)
+    monkeypatch.delenv("MCP_ALLOWED_HOSTS", raising=False)
     monkeypatch.setenv("WORKSPACE_ROOT", ".")
 
     from config import load_settings
@@ -31,12 +32,15 @@ def test_load_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.api_key is None
     assert s.transport == "streamable-http"
     assert s.auth_enabled is False
+    assert s.allowed_hosts == []
+    assert s.binds_publicly is True
 
 
 def test_load_settings_auth_and_port(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PORT", "8080")
     monkeypatch.setenv("API_KEY", "secret-token")
     monkeypatch.setenv("TRANSPORT", "http")
+    monkeypatch.setenv("MCP_ALLOWED_HOSTS", "demo.up.railway.app, other.example.com")
 
     from config import load_settings
 
@@ -45,6 +49,7 @@ def test_load_settings_auth_and_port(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s.api_key == "secret-token"
     assert s.auth_enabled is True
     assert s.transport == "streamable-http"
+    assert s.allowed_hosts == ["demo.up.railway.app", "other.example.com"]
 
 
 def test_health_and_root_public(monkeypatch: pytest.MonkeyPatch) -> None:

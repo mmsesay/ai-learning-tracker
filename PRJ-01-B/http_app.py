@@ -7,6 +7,7 @@ Streamable HTTP Starlette app the official MCP SDK builds.
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -45,8 +46,15 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
         # MCP endpoint is /mcp and may include trailing slash or subpaths.
         if path == "/mcp" or path.startswith("/mcp/"):
             auth = request.headers.get("authorization", "")
-            expected = f"Bearer {self._api_key}"
-            if auth != expected:
+            scheme, _, token = auth.partition(" ")
+            # Constant-time compare when lengths match; never log the token.
+            token_ok = False
+            if scheme.lower() == "bearer" and token:
+                try:
+                    token_ok = secrets.compare_digest(token, self._api_key)
+                except (TypeError, ValueError):
+                    token_ok = False
+            if not token_ok:
                 logger.warning("Unauthorized MCP request from %s", request.client)
                 return JSONResponse(
                     {"error": "unauthorized", "detail": "Valid Bearer token required"},
@@ -76,25 +84,51 @@ def register_public_routes(mcp) -> None:
         return JSONResponse({"status": "healthy", "service": "devassist"})
 
 
+def build_transport_security(settings: Settings):
+    """Configure DNS rebinding protection per official MCP deploy guidance.
+
+    - If ``MCP_ALLOWED_HOSTS`` is set: enable protection and allowlist those Hosts
+      (correct for a known Railway public domain).
+    - If unset on a public bind: disable protection. Official docs treat this as
+      acceptable behind a reverse proxy that already controls the Host header
+      (Railway's HTTPS edge). Prefer setting ``MCP_ALLOWED_HOSTS`` once the
+      domain is known.
+    """
+    from mcp.server.transport_security import TransportSecuritySettings
+
+    if settings.allowed_hosts:
+        # Include both bare host and host:* so :443 / odd ports still match.
+        hosts: list[str] = []
+        for host in settings.allowed_hosts:
+            hosts.append(host)
+            if ":" not in host:
+                hosts.append(f"{host}:*")
+        logger.info("DNS rebinding protection ON; allowed_hosts=%s", hosts)
+        return TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=hosts,
+        )
+
+    logger.warning(
+        "MCP_ALLOWED_HOSTS unset — DNS rebinding protection OFF "
+        "(ok behind Railway's reverse proxy; set MCP_ALLOWED_HOSTS to your "
+        "public domain when you have it)"
+    )
+    return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+
 def build_http_app(mcp, settings: Settings):
     """Build the Streamable HTTP Starlette app with optional API key middleware.
 
     Uses the official SDK path ``/mcp`` (Streamable HTTP, not legacy SSE).
     ``stateless_http=True`` keeps Railway / multi-instance deploys simple.
-    DNS-rebinding protection is off for public Host headers (Railway domains);
-    ``API_KEY`` is the access control when set.
     """
-    from mcp.server.transport_security import TransportSecuritySettings
-
     register_public_routes(mcp)
 
     app = mcp.streamable_http_app(
         streamable_http_path="/mcp",
         stateless_http=True,
-        # Public deploy: Host is the Railway domain, not 127.0.0.1.
-        transport_security=TransportSecuritySettings(
-            enable_dns_rebinding_protection=False
-        ),
+        transport_security=build_transport_security(settings),
         host=settings.host,
     )
 
@@ -104,7 +138,7 @@ def build_http_app(mcp, settings: Settings):
         logger.info("API key auth enabled for /mcp")
     else:
         logger.warning(
-            "API_KEY not set — /mcp is open (ok for local dev, not for public URLs)"
+            "API_KEY not set — /mcp is open (ok for local loopback, not for public URLs)"
         )
 
     return app

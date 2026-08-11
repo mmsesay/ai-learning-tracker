@@ -101,6 +101,14 @@ def main() -> None:
         mcp.run(transport="stdio")
         return
 
+    # Public binds without a key would expose tools to the internet.
+    if settings.binds_publicly and not settings.auth_enabled:
+        raise SystemExit(
+            "Refusing to start Streamable HTTP on a public bind (HOST="
+            f"{settings.host}) without API_KEY. Set API_KEY, or use "
+            "HOST=127.0.0.1 for local open access."
+        )
+
     # Streamable HTTP — official MCP remote transport (not legacy SSE).
     app = build_http_app(mcp, settings)
     import uvicorn
