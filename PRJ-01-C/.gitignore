@@ -1,0 +1,6 @@
+node_modules/
+.env
+dist/
+*.log
+# Medium draft (publish from local copy; keep secrets/drafts out of git)
+MEDIUM-ARTICLE.md

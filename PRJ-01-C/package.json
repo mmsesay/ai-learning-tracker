@@ -1,0 +1,23 @@
+{
+  "name": "prj-01-c-agent-harness",
+  "private": true,
+  "type": "module",
+  "description": "Minimal agent harness: LLM + remote DevAssist MCP tools + visible agent loop",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "list-tools": "tsx src/index.ts --list-tools"
+  },
+  "dependencies": {
+    "@ai-sdk/mcp": "^1.0.0",
+    "@ai-sdk/openai": "^2.0.0",
+    "ai": "^5.0.0",
+    "dotenv": "^16.4.0",
+    "undici": "^6.28.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
