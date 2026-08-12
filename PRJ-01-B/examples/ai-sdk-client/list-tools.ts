@@ -1,46 +1,48 @@
 /**
- * Example: consume remote DevAssist MCP from the Vercel AI SDK.
+ * Discover remote DevAssist MCP tools (no LLM).
  *
- * This is a *client* demo only — DevAssist itself stays a Python MCP server.
- *
- * Setup:
- *   cd examples/ai-sdk-client
- *   npm install
- *   export DEVASSIST_URL=https://YOUR-RAILWAY-DOMAIN/mcp
- *   export DEVASSIST_API_KEY=your-key   # if API_KEY is set on the server
- *   export OPENAI_API_KEY=...          # only needed if you call generateText
- *   npx tsx list-tools.ts
+ *   DEVASSIST_API_KEY=... npm run list-tools
  */
 
+import "dotenv/config";
+import { Agent, setGlobalDispatcher } from "undici";
 import { createMCPClient } from "@ai-sdk/mcp";
 
+// Render free-tier cold starts often exceed undici's default 10s connect timeout.
+// Prefer IPv4 — some networks stall on IPv6 routes to Render.
+setGlobalDispatcher(new Agent({ connect: { timeout: 90_000, family: 4 } }));
+
+const DEFAULT_URL = "https://ai-learning-tracker-c7m5.onrender.com/mcp";
+
 async function main() {
-  const url = process.env.DEVASSIST_URL ?? "http://127.0.0.1:3000/mcp";
+  if (!process.env.DEVASSIST_API_KEY?.trim() && process.env.API_KEY?.trim()) {
+    process.env.DEVASSIST_API_KEY = process.env.API_KEY;
+  }
+
+  const url = process.env.DEVASSIST_URL ?? DEFAULT_URL;
   const apiKey = process.env.DEVASSIST_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Set DEVASSIST_API_KEY (Bearer token for remote /mcp).");
+  }
+
+  console.log(`Connecting to ${url} …`);
 
   const mcpClient = await createMCPClient({
     transport: {
       type: "http",
       url,
-      headers: apiKey
-        ? { Authorization: `Bearer ${apiKey}` }
-        : undefined,
+      headers: { Authorization: `Bearer ${apiKey}` },
     },
   });
 
   try {
     const tools = await mcpClient.tools();
-    console.log("DevAssist tools:", Object.keys(tools));
-
-    // Optional: wire into generateText when you have a model provider key.
-    // import { generateText } from "ai";
-    // import { openai } from "@ai-sdk/openai";
-    // const result = await generateText({
-    //   model: openai("gpt-4o-mini"),
-    //   tools,
-    //   prompt: "List my development projects.",
-    // });
-    // console.log(result.text);
+    const names = Object.keys(tools);
+    console.log("Discovered MCP tools:", names.join(", "));
+    if (!names.includes("list_projects") || !names.includes("search_code")) {
+      throw new Error("Expected list_projects and search_code from DevAssist.");
+    }
   } finally {
     await mcpClient.close();
   }
