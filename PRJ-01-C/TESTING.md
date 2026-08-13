@@ -49,6 +49,10 @@ npm start "Search sample-app for greet and summarize what you find."
 
 Expect: `search_code` with `project=sample-app`, `query=greet`; matches in `app.py`.
 
+The tool header should report **shown vs total** counts, e.g. `Matches: 3 shown of 3 …`.
+That metadata comes from remote DevAssist (`PRJ-01-B`); this harness only forwards the tool result.
+When results are truncated, look for `matches_shown` / `matches_total` so the model cannot treat the listed lines as the full hit set.
+
 ### git_summary
 
 ```bash

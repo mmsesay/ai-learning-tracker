@@ -116,6 +116,8 @@ Remote DevAssist (Render)
 list_projects / search_code / git_summary
 ```
 
+PRJ-01-C does **not** reimplement those tools. It discovers them over MCP. So when Part 2 shipped the `search_code` shown/total match metadata (from a Part 1 reader comment), this harness picked it up automatically after Render redeployed — same remote tool, better output for the model.
+
 ---
 
 ## Learning comparison (PRJ-01)
@@ -187,6 +189,8 @@ Successful tool output from Render includes paths under:
 ```
 
 If you only see `/home/...`, you are not hitting Render.
+
+For `search_code`, expect a header like `Matches: 3 shown of 3 …` (or `N shown of M` when truncated). That format is owned by DevAssist on Render, not by this harness.
 
 ## Layout
 
