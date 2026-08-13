@@ -34,7 +34,8 @@ _IGNORE_DIRS = frozenset(
     }
 )
 
-# Cap matches so MCP responses stay readable in a chat context window.
+# Cap *shown* matches so MCP responses stay readable in a chat context.
+# We still count the rest so the model sees "shown of total", not a false ceiling.
 _MAX_MATCHES = 40
 _MAX_FILE_BYTES = 1_000_000
 _TEXT_SUFFIXES = frozenset(
@@ -99,7 +100,8 @@ def search_code(query: str, project: str) -> str:
         project: Project name or path under WORKSPACE_ROOT.
 
     Returns:
-        Matching file paths, line numbers, and line text — or an error string.
+        Header with matches_shown / matches_total, then matching paths with
+        line numbers and line text — or an error string.
     """
     needle = (query or "").strip()
     if not needle:
@@ -111,7 +113,8 @@ def search_code(query: str, project: str) -> str:
         return f"Error: {exc}"
 
     needle_lower = needle.lower()
-    matches: list[str] = []
+    shown: list[str] = []
+    matches_total = 0
     files_scanned = 0
 
     for dirpath_str, dirnames, filenames in os.walk(root):
@@ -142,18 +145,13 @@ def search_code(query: str, project: str) -> str:
             for line_no, line in enumerate(text.splitlines(), start=1):
                 if needle_lower not in line.lower():
                     continue
-                rel = path.relative_to(root)
-                matches.append(f"{rel}:{line_no}: {line.strip()}")
-                if len(matches) >= _MAX_MATCHES:
-                    header = (
-                        f"Project: {root}\n"
-                        f"Query: {needle!r}\n"
-                        f"Stopped early after {_MAX_MATCHES} matches "
-                        f"({files_scanned} files scanned).\n\n"
-                    )
-                    return header + "\n".join(matches) + "\n"
+                matches_total += 1
+                # Keep counting after the cap so totals stay honest for the model.
+                if len(shown) < _MAX_MATCHES:
+                    rel = path.relative_to(root)
+                    shown.append(f"{rel}:{line_no}: {line.strip()}")
 
-    if not matches:
+    if matches_total == 0:
         return (
             f"Project: {root}\n"
             f"Query: {needle!r}\n"
@@ -161,9 +159,18 @@ def search_code(query: str, project: str) -> str:
             f"(ignored dirs like .git, node_modules, .venv).\n"
         )
 
+    matches_shown = len(shown)
     header = (
         f"Project: {root}\n"
         f"Query: {needle!r}\n"
-        f"Matches: {len(matches)} (scanned {files_scanned} files)\n\n"
+        f"Matches: {matches_shown} shown of {matches_total} "
+        f"(scanned {files_scanned} files)\n"
     )
-    return header + "\n".join(matches) + "\n"
+    if matches_total > matches_shown:
+        header += (
+            f"Truncated to {_MAX_MATCHES} matches "
+            f"(matches_shown={matches_shown}, matches_total={matches_total}). "
+            "More usages exist beyond this cap.\n"
+        )
+    header += "\n"
+    return header + "\n".join(shown) + "\n"

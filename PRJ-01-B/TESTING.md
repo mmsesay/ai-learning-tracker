@@ -78,6 +78,10 @@ Use MCP Inspector or Cursor against `http://127.0.0.1:3000/mcp` and confirm:
 - `search_code`
 - `git_summary`
 
+For `search_code`, confirm the header reports `N shown of M`. If you force a tiny match
+cap in tests, a truncated run should also mention `matches_shown` / `matches_total`
+so the model cannot treat the listed lines as the full universe of hits.
+
 Or with stdio (unchanged local workflow):
 
 ```bash

@@ -63,7 +63,8 @@ async def search_code(query: str, project: str) -> str:
         project: Project directory name or relative path under WORKSPACE_ROOT.
 
     Returns:
-        Matching paths with line numbers and line text, or an error message.
+        Matching paths with line numbers and line text (with shown/total match
+        counts when results are capped), or an error message.
     """
     return search_code_impl(query=query, project=project)
 
