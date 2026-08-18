@@ -51,7 +51,7 @@ Details, Render, Cursor remote URL, and AI SDK example: [`PRJ-01-B/README.md`](P
 
 ## Links
 
-- Site: [maej.dev](https://maej.dev)  
-- X: [@DeeMaejor](https://twitter.com/DeeMaejor)  
+- Site: [muhammad.sesay.work](https://muhammad.sesay.work)  
+- X: [@NaMiMaej](https://twitter.com/NaMiMaej)  
 - OpenRouter: [openrouter.ai](https://openrouter.ai)  
 - MCP: [modelcontextprotocol.io](https://modelcontextprotocol.io)

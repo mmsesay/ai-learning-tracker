@@ -8,4 +8,3 @@ dist/
 build/
 .pytest_cache/
 get-pip.py
-MEDIUM-ARTICLE.md

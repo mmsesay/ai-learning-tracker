@@ -1,0 +1,5 @@
+# Medium / learning write-ups — keep local; do not publish with the code
+articles/
+
+# Local Cursor MCP config (machine-specific paths)
+LOCAL-MCP-JSON.md

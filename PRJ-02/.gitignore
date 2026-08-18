@@ -8,6 +8,5 @@ __pycache__/
 data/
 *.sqlite
 *.sqlite-journal
-MEDIUM-ARTICLE.md
 dist/
 *.egg-info/

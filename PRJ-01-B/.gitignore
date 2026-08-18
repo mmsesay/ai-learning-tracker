@@ -9,8 +9,6 @@ build/
 .ruff_cache/
 .env
 *.log
-MEDIUM-ARTICLE.md
-MEDIUM-ARTICLE-02.md
 node_modules/
 examples/ai-sdk-client/node_modules/
 examples/ai-sdk-client/.env
