@@ -1,0 +1,23 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	intake(intake)
+	classify(classify)
+	ask_clarification(ask_clarification)
+	knowledge(knowledge)
+	support(support)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> intake;
+	classify -. &nbsp;clarify&nbsp; .-> ask_clarification;
+	classify -. &nbsp;continue&nbsp; .-> knowledge;
+	intake --> classify;
+	knowledge --> support;
+	ask_clarification --> __end__;
+	support --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

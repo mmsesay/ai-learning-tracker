@@ -31,3 +31,8 @@ packages = ["app", "api"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "grandalf>=0.8",
+]
