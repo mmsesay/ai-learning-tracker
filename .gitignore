@@ -1,5 +1,7 @@
-# Medium / learning write-ups — keep local; do not publish with the code
+# Long-form writing lives in the private Maej Library (mmsesay/maej-library).
+# Keep ignoring accidental local article folders so they never enter this public repo.
 articles/
+ai-learning/
 
 # Local Cursor MCP config (machine-specific paths)
 LOCAL-MCP-JSON.md
